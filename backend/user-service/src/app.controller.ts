@@ -1,10 +1,12 @@
-import { Controller } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { Body, Controller, Post } from '@nestjs/common';
+import { AppService, type UserData } from './app.service';
 
 @Controller()
 export class AppController {
-  @EventPattern('USER_CREATED')
-  handleUserCreated(@Payload() data: any) {
-    console.log('Data recieved: ', data);
+  constructor(private readonly appService: AppService) {}
+
+  @Post()
+  async create(@Body() body: UserData) {
+    return this.appService.createUser(body);
   }
 }
