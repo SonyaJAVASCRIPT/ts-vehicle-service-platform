@@ -1,24 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
-  imports: [
-    ClientsModule.register([
-      {
-        name: 'USER_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
-          queue: 'user-queue',
-          queueOptions: {
-            durable: true,
-          },
-        },
-      },
-    ]),
-  ],
+  imports: [],
   controllers: [AppController],
   providers: [AppService],
 })
