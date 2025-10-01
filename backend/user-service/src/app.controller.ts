@@ -5,8 +5,9 @@ import { AppService, type UserData } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
   @Post()
-  async postUsers(@Body() body: UserData) {
-    return this.appService.createUser(body);
+  async user(@Body() body: UserData) {
+    await this.appService.createUser(body);
+    return 'Yeeey';
   }
   @Get()
   async getUsers(@Body() body: UserData) {
