@@ -1,0 +1,14 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://sonya:133755@localhost:5432/mydb?schema=public"
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+}

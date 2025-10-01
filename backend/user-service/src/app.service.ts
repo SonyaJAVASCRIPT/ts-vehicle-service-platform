@@ -1,20 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-export type UserData = {
-  id: string;
-  email: string;
-};
-
+import { Body, Injectable } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+import { CreateUserDto } from './dto/createUser.dto';
 @Injectable()
 export class AppService {
-  constructor(@Inject('USER_SERVICE') private userClient: ClientProxy) {}
-  async createUser(userdata: UserData) {
-    await this.userClient
-      .emit('USER_CREATED', {
-        id: Date.now(),
-        email: userdata.email,
-      })
-      .toPromise();
-    return `user is created: ${userdata.id} ${userdata.email}`;
+  constructor(private prisma: PrismaService) {}
+  async createUser(userdata: CreateUserDto) {
+    await this.prisma.user.create({
+      data: { email: userdata.email },
+    });
   }
 }
