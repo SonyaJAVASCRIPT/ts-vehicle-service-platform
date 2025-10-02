@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/vehicles"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://sonya:133755@localhost:5432/mydb?schema=vehicle-service"
+}
+
+model Vehicle {
+  id      Int     @id @default(autoincrement())
+  plate   String?
+  brand   String?
+  ownerId Int?
+
+  @@map("vehicle")
+}
