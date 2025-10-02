@@ -20,8 +20,8 @@ export class UserController {
     return 'Yeeey';
   }
   @Post('login')
-  async signIn(@Body() body: CreateUserDto) {
-    return await this.auth.signIn(body);
+  async login(@Body() body: CreateUserDto) {
+    return await this.userService.login(body);
   }
   @Get('/me')
   @UseGuards(AuthGuard)

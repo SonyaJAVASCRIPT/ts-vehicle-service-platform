@@ -1,10 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from 'src/dto/createUser.dto';
 import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from 'src/auth/auth.service';
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auth: AuthService,
+  ) {}
   async ifUserExist(email: string): Promise<boolean> {
     const user = await this.prisma.user.findFirst({
       where: {
@@ -30,5 +34,17 @@ export class UserService {
         password: hashedPassword,
       },
     });
+  }
+  async login(userData: CreateUserDto) {
+    const user = await this.findUserByEmail(userData.email);
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return await this.auth.signIn(
+      user.id,
+      user.username,
+      userData.password,
+      user.password,
+    );
   }
 }
