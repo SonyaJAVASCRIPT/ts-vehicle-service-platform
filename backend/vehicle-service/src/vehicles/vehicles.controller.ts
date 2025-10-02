@@ -1,10 +1,16 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+import { VehiclesService } from './vehicles.service';
+export type RmqPayload = {
+  id: number;
+  username: string;
+};
 
 @Controller('vehicles')
 export class VehiclesController {
+  constructor(private vechicleService: VehiclesService) {}
   @EventPattern('USER_CREATED')
-  handleUserCreated(@Payload() data: any) {
-    console.log('Получено событие USER_CREATED:', data);
+  async createUser(@Payload() data: RmqPayload) {
+    await this.vechicleService.createUser(data);
   }
 }

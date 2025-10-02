@@ -9,9 +9,10 @@ datasource db {
 }
 
 model Vehicle {
-  id      Int    @id @default(autoincrement())
-  plate   String @unique
-  brand String
-  ownerId Int
+  id      Int     @id @default(autoincrement())
+  plate   String?
+  brand   String?
+  ownerId Int?
+
   @@map("vehicle")
 }
