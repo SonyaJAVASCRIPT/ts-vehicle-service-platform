@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -8,9 +9,11 @@ import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginUserDto } from 'src/dto/loginUser.dto';
+import { ClientProxy } from '@nestjs/microservices';
 @Injectable()
 export class UserService {
   constructor(
+    @Inject('USER_CLIENT') private readonly client: ClientProxy,
     private prisma: PrismaService,
     private auth: AuthService,
   ) {}
@@ -39,11 +42,15 @@ export class UserService {
       );
     }
     const hashedPassword = await bcrypt.hash(userdata.password, saltRounds);
-    return this.prisma.user.create({
+    const createdUser = await this.prisma.user.create({
       data: {
         ...userdata,
         password: hashedPassword,
       },
+    });
+    this.client.emit('USER_CREATED', {
+      id: createdUser.id,
+      username: createdUser.username,
     });
   }
   async login(userData: LoginUserDto) {
