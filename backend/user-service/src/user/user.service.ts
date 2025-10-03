@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from 'src/dto/createUser.dto';
 import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
+import { LoginUserDto } from 'src/dto/loginUser.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -27,6 +32,12 @@ export class UserService {
   }
   async createUser(userdata: CreateUserDto) {
     const saltRounds = 10;
+    const user = await this.findUserByEmail(userdata.email);
+    if (user) {
+      throw new UnauthorizedException(
+        `Користувач з ${userdata.email} вже існує`,
+      );
+    }
     const hashedPassword = await bcrypt.hash(userdata.password, saltRounds);
     return this.prisma.user.create({
       data: {
@@ -35,7 +46,7 @@ export class UserService {
       },
     });
   }
-  async login(userData: CreateUserDto) {
+  async login(userData: LoginUserDto) {
     const user = await this.findUserByEmail(userData.email);
     if (!user) {
       throw new NotFoundException();
