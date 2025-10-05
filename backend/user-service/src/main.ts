@@ -10,8 +10,11 @@ async function bootstrap() {
     options: {
       urls: ['amqp://localhost:5672'],
       queue: 'user-queue',
-      queueOptions: { durable: false },
+      queueOptions: { durable: true },
     },
+  });
+  app.enableCors({
+    origin: 'http://localhost:3000', // разрешить все источники, можно заменить на конкретный URL
   });
   app.useGlobalPipes(
     new ValidationPipe({

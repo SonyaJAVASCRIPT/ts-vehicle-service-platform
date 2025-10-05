@@ -13,6 +13,20 @@ model Vehicle {
   plate   String?
   brand   String?
   ownerId Int?
+  fines   Fine[]
 
   @@map("vehicle")
+}
+
+model Fine {
+  id          Int     @id @default(autoincrement())
+  date        String
+  description String
+  amount      Float
+  status      Boolean @default(false)
+
+  vehicleId Int
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("fine")
 }
