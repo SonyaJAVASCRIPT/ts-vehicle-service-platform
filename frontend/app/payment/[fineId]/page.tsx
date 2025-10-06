@@ -19,7 +19,7 @@ import {
   Calendar,
   FileText,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { vehicleService } from "@/hooks/env";
 
 interface Fine {
