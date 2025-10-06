@@ -5,14 +5,14 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://sonya:133755@localhost:5432/mydb?schema=vehicle-service"
+  url      = env("VEHICLE_DATABASE_URL")
 }
 
 model Vehicle {
   id      Int     @id @default(autoincrement())
   plate   String?
   brand   String?
-  ownerId Int?
+  ownerId Int?    @unique()
   fines   Fine[]
 
   @@map("vehicle")
@@ -24,9 +24,8 @@ model Fine {
   description String
   amount      Float
   status      Boolean @default(false)
-
-  vehicleId Int
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId   Int
+  vehicle     Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@map("fine")
 }

@@ -14,9 +14,12 @@ export class AuthService {
     if (!compare) {
       throw new UnauthorizedException();
     }
+
     const payload = { sub: userId, username: userUsername };
     return {
       access_token: await this.jwtService.signAsync(payload),
+      username: userUsername,
+      id: userId,
     };
   }
 }

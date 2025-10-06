@@ -17,10 +17,8 @@ export class CreateFineDto {
 export class UpdateFineDto {
   @IsString()
   date?: string;
-
   @IsString()
   description?: string;
-
   @IsNumber()
   amount?: number;
   @IsOptional()
