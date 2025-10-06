@@ -1,7 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,294 +5,207 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Car,
-  LogOut,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-  CreditCard,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { CarIcon, Calendar, FileText, LogOut, Settings } from "lucide-react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { userService, vehicleService } from "../../hooks/env";
 
-interface Fine {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  status: string;
+export interface User {
+  sub: string;
+  username: string;
+  fullName?: string;
 }
 
-interface Vehicle {
+export interface Fine {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  status: boolean;
+  vehicleId: number;
+}
+
+export interface Car {
+  id: number;
   plate: string;
   brand: string;
+  ownerId: number;
   fines: Fine[];
 }
 
-interface UserData {
-  userId: number;
-  username: string;
+async function getCar(userId: string): Promise<Car | null> {
+  console.log(userId);
+  const res = await fetch(`${vehicleService}/vehicles/${userId}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return res.json();
 }
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [userName, setUserName] = useState("");
-  const [userCar, setUserCar] = useState<{
-    licensePlate: string;
-    brand: string;
-  } | null>(null);
-  const [fines, setFines] = useState<Fine[]>([]);
-  const [totalUnpaid, setTotalUnpaid] = useState(0);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const storage = localStorage.getItem("userdata");
-        if (!storage) {
-          router.push("/");
-          return;
-        }
-
-        const userData: UserData = JSON.parse(storage);
-        setUserName(userData.username);
-
-        console.log("🔑 UserData:", userData);
-
-        const res = await fetch(
-          `http://localhost:3002/vehicles/owner/${userData.userId}`,
-        );
-
-        if (!res.ok) {
-          throw new Error("❌ Ошибка при получении автомобиля");
-        }
-
-        const vehicle: Vehicle = await res.json();
-        console.log("🚘 Vehicle data:", vehicle);
-
-        setUserCar({
-          licensePlate: vehicle.plate,
-          brand: vehicle.brand,
-        });
-
-        // Устанавливаем штрафы
-        setFines(vehicle.fines || []);
-        calculateTotal(vehicle.fines);
-
-        console.log("📋 Fines:", vehicle.fines);
-      } catch (error) {
-        console.error("❌ Ошибка загрузки:", error);
-      }
-    };
-
-    fetchData();
-  }, [router]);
-
-  const calculateTotal = (finesList: Fine[]) => {
-    const total = finesList
-      .filter((f) => f.status === "UNPAID")
-      .reduce((sum, f) => sum + f.amount, 0);
-    setTotalUnpaid(total);
+export default async function Page() {
+  const cookiesStore = await cookies();
+  const token = cookiesStore.get("token")?.value;
+  if (!token) {
+    redirect("/");
+  }
+  console.log(token);
+  const userRes = await fetch(`${userService}/user/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!userRes.ok) {
+    redirect("/");
+  }
+  const user: User = await userRes.json();
+  const car = await getCar(user.sub);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ru-RU", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("userdata");
-    router.push("/");
-  };
-
-  const handlePayFine = async (fineId: number) => {
-    try {
-      const res = await fetch(
-        `http://localhost:3002/vehicles/1/fines/${fineId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ status: "PAID" }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      if (!res.ok) throw new Error("❌ Ошибка при оплате штрафа");
-
-      console.log(`💳 Fine ${fineId} успешно оплачен`);
-
-      const updatedFines = fines.map((f) =>
-        f.id === fineId ? { ...f, status: "PAID" } : f,
-      );
-      setFines(updatedFines);
-      calculateTotal(updatedFines);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "UNPAID":
-        return (
-          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Не оплачено
-          </Badge>
-        );
-      case "PAID":
-        return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Оплачено
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "UAH",
+    }).format(amount);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-balance">Мої штрафи</h1>
-            <p className="text-lg text-muted-foreground mt-1">
-              Вітаємо, {userName}
-            </p>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <CarIcon className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Личный кабинет</h1>
+              <h1>{user.username}</h1>
+            </div>
           </div>
-
-          <Button variant="outline" size="lg" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Вийти
-          </Button>
+          <div className="flex items-center gap-2">
+            <form action="/">
+              <Button variant="outline" formAction="/admin">
+                <Settings className="w-4 h-4 mr-2" />
+                Админ-панель
+              </Button>
+              <Button variant="ghost">
+                <LogOut className="w-4 h-4 mr-2" />
+                Выход
+              </Button>
+            </form>
+          </div>
         </div>
+      </header>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-600 p-3 rounded-lg">
-                  <Car className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Ваш автомобіль</CardTitle>
-                  <CardDescription>
-                    Інформація про зареєстрований транспортний засіб
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Номерний знак
-                  </p>
-                  <p className="text-3xl font-mono font-bold">
-                    {userCar?.licensePlate}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Марка</p>
-                  <p className="text-2xl font-semibold">{userCar?.brand}</p>
-                </div>
-              </div>
-            </CardContent>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => router.push("/admin")}
-            >
-              <LogOut className="w-4 h-4 mr-2" />У адмiн-панель
-            </Button>
-          </Card>
-
-          {totalUnpaid > 0 && (
-            <Card className="shadow-lg border-red-200 bg-red-50">
-              <CardContent className="pt-8 pb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-base text-red-700 mb-2">
-                      Загальна сума до сплати
-                    </p>
-                    <p className="text-4xl font-bold text-red-700">
-                      {totalUnpaid} грн
-                    </p>
-                  </div>
-                  <AlertCircle className="w-16 h-16 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Fines List */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Список штрафів</h2>
-
-          {fines.length === 0 ? (
-            <Card className="shadow-lg">
+      <main className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          {!car ? (
+            <Card>
               <CardContent className="py-12 text-center">
-                <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Штрафів немає</h3>
+                <CarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Нет зарегистрированных автомобилей
+                </h3>
                 <p className="text-muted-foreground">
-                  У вас немає активних штрафів. Дотримуйтесь ПДР!
+                  У вас пока нет добавленных транспортных средств
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {fines.map((fine) => (
-                <Card
-                  key={fine.id}
-                  className="shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <CardContent className="p-8">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-semibold text-xl text-pretty">
-                            {fine.description}
-                          </h3>
-                          {getStatusBadge(fine.status)}
-                        </div>
-                        <div className="text-base text-muted-foreground space-y-1">
-                          <p>
-                            Дата:{" "}
-                            {new Date(fine.date).toLocaleDateString("uk-UA")}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Сума
-                          </p>
-                          <p className="text-3xl font-bold">
-                            {fine.amount} грн
-                          </p>
-                        </div>
-
-                        {fine.status === "UNPAID" && (
-                          <Button
-                            onClick={() =>
-                              router.push(`/payment?fineId=${fine.id}`)
-                            }
-                            size="lg"
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Оплатити
-                          </Button>
-                        )}
-                      </div>
+            <Card key={car.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <CarIcon className="w-8 h-8 text-primary" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <div>
+                      <CardTitle className="text-2xl">{car.brand}</CardTitle>
+                      <CardDescription className="text-lg font-mono">
+                        {car.plate}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  {car.fines.some((f) => !f.status) && (
+                    <Badge
+                      variant="destructive"
+                      className="text-base px-3 py-1"
+                    >
+                      {car.fines.filter((f) => !f.status).length} штраф(ов)
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {car.fines.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                    <p>Нет штрафов по данному автомобилю</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {car.fines.filter((f) => !f.status).length > 0 && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                        <p className="text-sm font-medium text-destructive mb-1">
+                          Неоплаченные штрафы
+                        </p>
+                        <p className="text-2xl font-bold text-destructive">
+                          {formatAmount(
+                            car.fines
+                              .filter((f) => !f.status)
+                              .reduce((sum, f) => sum + f.amount, 0),
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      {car.fines.map((fine) => (
+                        <div
+                          key={fine.id}
+                          className="border rounded-lg p-4 flex items-start justify-between gap-4"
+                        >
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  fine.status ? "secondary" : "destructive"
+                                }
+                              >
+                                {fine.status ? "Оплачено" : "Не оплачено"}
+                              </Badge>
+                              <span className="text-lg font-bold">
+                                {formatAmount(fine.amount)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {fine.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(fine.date)}</span>
+                            </div>
+                          </div>
+                          {!fine.status && (
+                            <Button asChild>
+                              <a href={`/payment/${fine.id}`}>Оплатить</a>
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

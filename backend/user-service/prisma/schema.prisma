@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://sonya:133755@localhost:5432/mydb?schema=user-service"
+  url      = env("USER_DATABASE_URL")
 }
 
 model User {
@@ -13,5 +13,6 @@ model User {
   username String
   password String
   email    String @unique
+
   @@map("user")
 }

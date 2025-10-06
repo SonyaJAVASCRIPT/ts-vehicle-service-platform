@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,101 +8,103 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Shield, Car, AlertCircle } from "lucide-react";
-
-export default function WelcomePage() {
+import { Shield, User, UserCog } from "lucide-react";
+import { useRouter } from "next/navigation";
+export default function Page() {
+  const handleAuth = () => {
+    console.log("Нажата кнопка авторизации");
+    router.push("/auth");
+  };
   const router = useRouter();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-6">
-      <Card className="max-w-4xl w-full shadow-xl">
-        <CardHeader className="text-center space-y-4 pb-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl space-y-8">
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="bg-blue-600 p-4 rounded-2xl">
-              <Shield className="w-12 h-12 text-white" />
+            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center">
+              <Shield className="w-12 h-12 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-balance">
-            Система управління штрафами
-          </CardTitle>
-          <CardDescription className="text-base text-pretty">
-            Тестова версія державного порталу для перегляду та оплати штрафів за
-            порушення ПДР
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6 px-8 pb-8">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-900">
-              <p className="font-semibold mb-1">Це тестова версія</p>
-              <p className="text-amber-800">
-                Всі дані є демонстраційними. Реальні платежі не здійснюються.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Car className="w-5 h-5 text-blue-600" />
-              Інструкції для входу
-            </h3>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="border border-border rounded-lg p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-foreground">
-                    Звичайний користувач
-                  </h4>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                    Користувач
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Зареєструйтеся як новий користувач або увійдіть з тестовими
-                  даними:
-                </p>
-                <div className="bg-muted rounded p-3 space-y-1 text-sm font-mono">
-                  <p>
-                    <span className="text-muted-foreground">Пошта:</span>{" "}
-                    user@test.ua
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Пароль:</span>{" "}
-                    user123
-                  </p>
-                </div>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Система управления штрафами
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Государственный портал для контроля и оплаты штрафов
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <User className="w-6 h-6 text-primary" />
               </div>
-
-              <div className="border border-border rounded-lg p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-foreground">
-                    Адміністратор
-                  </h4>
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                    Адмін
-                  </span>
-                </div>
+              <CardTitle>Для пользователей</CardTitle>
+              <CardDescription>
+                Инструкция по использованию системы
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <h4 className="font-medium">1. Регистрация</h4>
                 <p className="text-sm text-muted-foreground">
-                  Увійдіть з правами адміністратора для управління штрафами:
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Ви також можете зайти в адмін панель через панель стандартного
-                  користувача. Після логіну натисніть на кнопку «адмін панель»
+                  Зарегистрируйтесь, указав ФИО, email и пароль. После
+                  регистрации добавьте информацию о вашем автомобиле.
                 </p>
               </div>
-            </div>
-          </div>
-
-          <Button
-            className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700"
-            onClick={() => {
-              router.push("auth");
-            }}
-          >
-            Продовжити до входу
+              <div className="space-y-2">
+                <h4 className="font-medium">2. Просмотр штрафов</h4>
+                <p className="text-sm text-muted-foreground">
+                  В личном кабинете вы увидите все штрафы по вашему автомобилю с
+                  описанием и датой.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">3. Оплата</h4>
+                <p className="text-sm text-muted-foreground">
+                  Нажмите кнопку "Оплатить" рядом с неоплаченным штрафом для
+                  перехода к оплате.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <UserCog className="w-6 h-6 text-primary" />
+              </div>
+              <CardTitle>Для администраторов</CardTitle>
+              <CardDescription>Управление системой штрафов</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <h4 className="font-medium">1. Доступ к панели</h4>
+                <p className="text-sm text-muted-foreground">
+                  Из личного кабинета перейдите в административную панель.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">2. Просмотр автомобилей</h4>
+                <p className="text-sm text-muted-foreground">
+                  В админ-панели отображаются все зарегистрированные автомобили
+                  пользователей.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">3. Добавление штрафов</h4>
+                <p className="text-sm text-muted-foreground">
+                  Выберите автомобиль и добавьте новый штраф с описанием и
+                  суммой.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="flex justify-center">
+          <Button size="lg" onClick={handleAuth} className="px-8">
+            Начать работу
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

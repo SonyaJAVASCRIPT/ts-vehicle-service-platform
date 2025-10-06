@@ -1,7 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
 import {
   Card,
   CardContent,
@@ -9,9 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,256 +19,267 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, Plus, Car, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, CarIcon, Plus, UserIcon } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { userService, vehicleService } from "@/hooks/env";
+export interface User {
+  sub: string;
+  username: string;
+  fullName?: string;
+  email?: string;
+}
 
-interface CarWithFines {
+export interface Fine {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  status: boolean;
+  vehicleId: number;
+}
+
+export interface Car {
   id: number;
   plate: string;
   brand: string;
   ownerId: number;
   fines: Fine[];
+  owner?: User;
 }
 
-interface Fine {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  status: "PAID" | "UNPAID";
+async function getUser(token: string): Promise<User | null> {
+  const res = await fetch(`${userService}/user/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return res.json();
 }
 
-interface FineForm {
-  description: string;
-  amount: string;
-  location: string;
+async function getCars(): Promise<Car[]> {
+  const res = await fetch(`${vehicleService}/vehicles`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  return res.json();
 }
 
-export default function AdminPage() {
-  const router = useRouter();
-  const [cars, setCars] = useState<CarWithFines[]>([]);
-  const [selectedCar, setSelectedCar] = useState<CarWithFines | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [fineForm, setFineForm] = useState<FineForm>({
-    description: "",
-    amount: "",
-    location: "",
+async function createFine(formData: FormData) {
+  "use server";
+
+  const carId = formData.get("carId");
+  const description = formData.get("description");
+  const amount = formData.get("amount");
+
+  if (!carId || !description || !amount) {
+    throw new Error("Недостаточно данных для создания штрафа");
+  }
+
+  const res = await fetch(`${vehicleService}/fine/${carId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      description: description.toString(),
+      amount: Number(amount),
+      date: new Date().toISOString(),
+    }),
   });
 
-  useEffect(() => {
-    loadCars();
-  }, []);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Ошибка при создании штрафа: ${text}`);
+  }
 
-  const loadCars = async () => {
-    try {
-      const res = await fetch("http://localhost:3002/vehicles");
-      if (!res.ok) throw new Error("Помилка завантаження авто");
-      const data = await res.json();
-      setCars(data);
-    } catch (err) {
-      console.error("❌ Не вдалося завантажити авто:", err);
-    }
-  };
+  const data = await res.json();
+  console.log("Штраф создан:", data);
+  revalidatePath("/admin");
+}
 
-  const handleLogout = () => {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
-    router.push("/");
-  };
+export default async function AdminPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) redirect("/");
 
-  const handleAddFine = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const user = await getUser(token);
+  if (!user) redirect("/");
 
-    if (!selectedCar) return;
+  const cars = await getCars();
 
-    try {
-      const res = await fetch(
-        `http://localhost:3002/vehicles/${selectedCar.id}/fines`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            description: fineForm.description,
-            amount: parseFloat(fineForm.amount),
-            date: new Date().toISOString(),
-            status: "UNPAID",
-          }),
-        },
-      );
-
-      if (!res.ok) throw new Error("❌ Помилка при додаванні штрафу");
-
-      alert(`✅ Штраф додано для ${selectedCar.plate}`);
-      setIsDialogOpen(false);
-      setSelectedCar(null);
-      setFineForm({ description: "", amount: "", location: "" });
-
-      loadCars();
-    } catch (err) {
-      console.error("❌ handleAddFine error:", err);
-      alert("Не вдалося додати штраф");
-    }
-  };
+  const formatAmount = (amount: number) =>
+    new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "UAH",
+    }).format(amount);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-purple-600 p-3 rounded-lg">
-              <Shield className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <form action="/" method="get">
+            <Button variant="ghost" className="mb-2" formAction="/dashboard">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Назад в личный кабинет
+            </Button>
+          </form>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <UserIcon className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Адмін-панель</h1>
-              <p className="text-lg text-muted-foreground">
-                Управління штрафами та користувачами
+              <h1 className="text-xl font-bold">Административная панель</h1>
+              <p className="text-sm text-muted-foreground">
+                Управление штрафами
               </p>
             </div>
           </div>
-          <Button variant="outline" size="lg" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Вийти
-          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => router.push("/dashboard")}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Назад
-        </Button>
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="shadow-lg">
-            <CardContent className="pt-8 pb-8">
-              <p className="text-sm text-muted-foreground mb-1">
-                Всього автомобілів
-              </p>
-              <p className="text-3xl font-bold">{cars.length}</p>
-            </CardContent>
-          </Card>
+      </header>
 
-          <Card className="shadow-lg">
-            <CardContent className="pt-8 pb-8">
-              <p className="text-sm text-muted-foreground mb-1">
-                Всього штрафів
-              </p>
-              <p className="text-3xl font-bold">
-                {cars.reduce((sum, c) => sum + c.fines.length, 0)}
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">
+            Все зарегистрированные автомобили
+          </h2>
+          <p className="text-muted-foreground">
+            Всего автомобилей: {cars.length}
+          </p>
+        </div>
+
+        {cars.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <CarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                Нет зарегистрированных автомобилей
+              </h3>
+              <p className="text-muted-foreground">
+                В системе пока нет транспортных средств
               </p>
             </CardContent>
           </Card>
-        </div>
-        {/* Cars List */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Список автомобілів</CardTitle>
-            <CardDescription>
-              Виберіть авто для додавання штрафу
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {cars.length === 0 ? (
-              <div className="text-center py-12">
-                <Car className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Немає зареєстрованих авто
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {cars.map((car) => (
-                  <Card
-                    key={car.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-6 flex justify-between items-center">
-                      <div>
-                        <p className="text-2xl font-mono font-bold">
-                          {car.plate}
-                        </p>
-                        <Badge variant="outline">{car.brand}</Badge>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Власник ID: {car.ownerId}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Штрафів: {car.fines.length}
-                        </p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {cars
+              .slice()
+              .reverse()
+              .map((car) => {
+                const fines = [...car.fines];
+                const unpaid = fines.filter((f) => !f.status);
+                const totalUnpaid = unpaid.reduce(
+                  (sum, f) => sum + f.amount,
+                  0,
+                );
+
+                return (
+                  <Card key={car.id} className="flex flex-col h-full">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <CarIcon className="w-7 h-7 text-primary" />
+                        </div>
+                        {unpaid.length > 0 && (
+                          <Badge variant="destructive">{unpaid.length}</Badge>
+                        )}
+                      </div>
+                      <CardTitle className="text-xl">{car.brand}</CardTitle>
+                      <CardDescription className="font-mono text-base">
+                        {car.plate}
+                      </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="flex flex-col justify-between flex-1 space-y-4">
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Владелец
+                          </p>
+                          <p className="font-medium">
+                            {car.owner?.username || "Неизвестно"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {car.owner?.email}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            Статистика штрафов
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Всего:</span>
+                            <span className="font-medium">{fines.length}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Не оплачено:</span>
+                            <span className="font-medium text-destructive">
+                              {unpaid.length}
+                            </span>
+                          </div>
+                          {totalUnpaid > 0 && (
+                            <div className="flex items-center justify-between pt-1 border-t">
+                              <span className="text-sm font-medium">
+                                Сумма:
+                              </span>
+                              <span className="font-bold text-destructive">
+                                {formatAmount(totalUnpaid)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <Dialog
-                        open={isDialogOpen && selectedCar?.id === car.id}
-                        onOpenChange={setIsDialogOpen}
-                      >
+                      <Dialog>
                         <DialogTrigger asChild>
-                          <Button
-                            onClick={() => setSelectedCar(car)}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
+                          <Button className="w-full mt-auto">
                             <Plus className="w-4 h-4 mr-2" />
-                            Додати штраф
+                            Добавить штраф
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-lg">
+                        <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Додати штраф</DialogTitle>
+                            <DialogTitle>Добавить штраф</DialogTitle>
                             <DialogDescription>
-                              Додайте штраф для {car.plate}
+                              {car.brand} • {car.plate}
                             </DialogDescription>
                           </DialogHeader>
 
-                          <form onSubmit={handleAddFine} className="space-y-4">
+                          <form action={createFine} className="space-y-4">
+                            <input
+                              type="hidden"
+                              name="carId"
+                              value={car.ownerId}
+                            />
                             <div className="space-y-2">
-                              <Label htmlFor="description">Опис</Label>
+                              <Label htmlFor="description">
+                                Описание нарушения
+                              </Label>
                               <Textarea
                                 id="description"
-                                value={fineForm.description}
-                                onChange={(e) =>
-                                  setFineForm({
-                                    ...fineForm,
-                                    description: e.target.value,
-                                  })
-                                }
+                                name="description"
+                                placeholder="Превышение скорости на 20 км/ч..."
                                 required
+                                rows={3}
                               />
                             </div>
-
                             <div className="space-y-2">
-                              <Label htmlFor="amount">Сума (грн)</Label>
+                              <Label htmlFor="amount">Сумма штрафа (грн)</Label>
                               <Input
                                 id="amount"
+                                name="amount"
                                 type="number"
-                                value={fineForm.amount}
-                                onChange={(e) =>
-                                  setFineForm({
-                                    ...fineForm,
-                                    amount: e.target.value,
-                                  })
-                                }
+                                placeholder="500"
                                 required
+                                min="0"
+                                step="0.01"
                               />
                             </div>
-
                             <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  setIsDialogOpen(false);
-                                  setSelectedCar(null);
-                                }}
-                                className="flex-1"
-                              >
-                                Скасувати
+                              <Button type="submit" className="flex-1">
+                                Добавить штраф
                               </Button>
-                              <Button
-                                type="submit"
-                                className="flex-1 bg-purple-600 hover:bg-purple-700"
-                              >
-                                Додати
+                              <Button type="button" variant="outline">
+                                Отмена
                               </Button>
                             </div>
                           </form>
@@ -277,12 +287,11 @@ export default function AdminPage() {
                       </Dialog>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                );
+              })}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

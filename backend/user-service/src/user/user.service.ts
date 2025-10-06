@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from 'src/dto/createUser.dto';
 import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
+import { LoginUserDto } from 'src/dto/loginUser.dto';
+import { ClientProxy } from '@nestjs/microservices';
 @Injectable()
 export class UserService {
   constructor(
+    @Inject('USER_CLIENT') private readonly client: ClientProxy,
     private prisma: PrismaService,
     private auth: AuthService,
   ) {}
@@ -27,15 +35,25 @@ export class UserService {
   }
   async createUser(userdata: CreateUserDto) {
     const saltRounds = 10;
+    const user = await this.findUserByEmail(userdata.email);
+    if (user) {
+      throw new UnauthorizedException(
+        `Користувач з ${userdata.email} вже існує`,
+      );
+    }
     const hashedPassword = await bcrypt.hash(userdata.password, saltRounds);
-    return this.prisma.user.create({
+    const createdUser = await this.prisma.user.create({
       data: {
         ...userdata,
         password: hashedPassword,
       },
     });
+    this.client.emit('USER_CREATED', {
+      id: createdUser.id,
+      username: createdUser.username,
+    });
   }
-  async login(userData: CreateUserDto) {
+  async login(userData: LoginUserDto) {
     const user = await this.findUserByEmail(userData.email);
     if (!user) {
       throw new NotFoundException();
