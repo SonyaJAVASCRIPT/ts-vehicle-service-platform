@@ -41,9 +41,9 @@ interface PageProps {
   params: { fineId: string };
 }
 
-export default function PaymentPage({ params }: PageProps) {
+export default function PaymentPage() {
   const router = useRouter();
-  const fineId = params.fineId;
+  const { fineId } = useParams<{ fineId: string }>();
   const [fine, setFine] = useState<Fine | null>(null);
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
