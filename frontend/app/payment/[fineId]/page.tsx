@@ -20,7 +20,8 @@ import {
   FileText,
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { vehicleService } from "@/hooks/env";
+// import { vehicleService } from "@/hooks/env";
+const vehicleService = "http://localhost:3002";
 
 interface Fine {
   id: number;

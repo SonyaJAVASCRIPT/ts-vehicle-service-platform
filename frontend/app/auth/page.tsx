@@ -15,8 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/utils";
-import { userService, vehicleService } from "@/hooks/env";
-
+const vehicleService = "http://localhost:3002";
+const userService = "http://localhost:3001";
 export default function Page() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -82,7 +82,7 @@ export default function Page() {
     e.preventDefault();
     setError("");
     try {
-      const user = await getCurrentUser();
+      const user = await getCurrentUser("http://localhost:3001");
       if (!user) {
         router.push("/");
         return;

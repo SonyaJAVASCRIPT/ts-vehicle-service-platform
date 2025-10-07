@@ -1,13 +1,14 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { userService, vehicleService } from "../hooks/env";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const getCurrentUser = async () => {
+export const getCurrentUser = async (link: string) => {
   try {
-    const res = await fetch("http://localhost:3001/user/me", {
+    const res = await fetch(`${link}/user/me`, {
       method: "GET",
       credentials: "include",
     });
