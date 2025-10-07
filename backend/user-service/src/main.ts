@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const PORT = configService.get<number>('USER_SERVICE_PORT') || 3002;
+  const PORT = configService.get<number>('USER_SERVICE_PORT') || 3001;
   const CORS =
     configService.get<string>('FRONTEND_CORS_ORIGIN') ||
     'http://localhost:3000';
