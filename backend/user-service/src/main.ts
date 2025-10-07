@@ -8,7 +8,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const PORT = configService.get<number>('USER_SERVICE_PORT') || 3002;
   const CORS =
-    configService.get<string>('FRONTEND_CORS_ORIGIN') || 'http://localhost:300';
+    configService.get<string>('FRONTEND_CORS_ORIGIN') ||
+    'http://localhost:3000';
   app.enableCors({
     origin: CORS,
     credentials: true,

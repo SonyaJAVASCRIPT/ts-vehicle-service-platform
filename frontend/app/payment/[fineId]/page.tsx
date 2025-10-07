@@ -247,11 +247,15 @@ export default function PaymentPage() {
                       id="cardNumber"
                       placeholder="1234 5678 9012 3456"
                       value={cardNumber}
-                      onChange={(e) =>
-                        setCardNumber(
-                          e.target.value.replace(/\D/g, "").slice(0, 16),
-                        )
-                      }
+                      onChange={(e) => {
+                        const digits = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 16);
+                        const formatted = digits
+                          .replace(/(.{4})/g, "$1 ")
+                          .trim();
+                        setCardNumber(formatted);
+                      }}
                       required
                       className="pr-10"
                     />
