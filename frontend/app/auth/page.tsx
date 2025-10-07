@@ -15,8 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/utils";
-const vehicleService = "http://localhost:3002";
-const userService = "http://localhost:3001";
+import { nextUserService as userService } from "@/hooks/env";
+import { nextVehicleService as vehicleService } from "@/hooks/env";
 export default function Page() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
