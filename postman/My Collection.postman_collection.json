@@ -1,0 +1,254 @@
+{
+  "info": {
+    "_postman_id": "2dd4fdac-2a2e-4742-935f-da02740ccc5a",
+    "name": "My Collection",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48918362",
+    "_collection_link": "https://SonyaJAVASCRIPT-7580383.postman.co/workspace/SonyaJAVASCRIPT's-Workspace~7288f968-e27d-4a83-8f0f-02efb6153b3d/collection/48918362-2dd4fdac-2a2e-4742-935f-da02740ccc5a?action=share&source=collection_link&creator=48918362"
+  },
+  "item": [
+    {
+      "name": "vehicles-service",
+      "item": [
+        {
+          "name": "fines",
+          "item": [
+            {
+              "name": "create fine",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"2025-10-07\",\n  \"description\": \"Desc\",\n  \"amount\": 1,\n  \"status\": false\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3002/fine/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "3002",
+                  "path": ["fine", "1"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "get fines",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"2025-10-07\",\n  \"description\": \"Desc\",\n  \"amount\": 1,\n  \"status\": false\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3002/fine/",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "3002",
+                  "path": ["fine", ""]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "get fine by id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3002/fine/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "3002",
+                  "path": ["fine", "1"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "get fine by id Copy",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"2025-10-08\",\n  \"description\": \"\",\n  \"amount\": 150,\n  \"status\": true\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3002/fine/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "3002",
+                  "path": ["fine", "1"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "get vehicle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{vehicle-service}}/vehicles",
+              "host": ["{{vehicle-service}}"],
+              "path": ["vehicles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get vehicle by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{vehicle-service}}/vehicles/1",
+              "host": ["{{vehicle-service}}"],
+              "path": ["vehicles", "1"],
+              "query": [
+                {
+                  "key": "",
+                  "value": "10",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update vehicle by id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"BB43CC\",\n  \"brand\": \"Honda\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3002/vehicles/51",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3002",
+              "path": ["vehicles", "51"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "user-service",
+      "item": [
+        {
+          "name": "create user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@gmail.com\",\n    \"username\": \"admin\",\n    \"password\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3001/user/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["user", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/user/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["user", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ3LCJ1c2VybmFtZSI6ImFkbWluIiwiaWF0IjoxNzU5Njc5MDcyfQ.JOI8nShhwTR0sWfbnB59jAfVD23nMPKfLIxc-q4x3Ow",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@gmail.com\",\n    \"password\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3001/user/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["user", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "vehicle-service",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
