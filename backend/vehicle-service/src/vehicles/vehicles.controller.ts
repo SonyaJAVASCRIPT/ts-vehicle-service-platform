@@ -2,10 +2,7 @@ import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { VehiclesService } from './vehicles.service';
 import { UpdateVehicleDto } from 'src/dto/vehicle.dto';
-export type RmqPayload = {
-  id: number;
-  username: string;
-};
+import { type RmqPayload } from 'src/types/rabbitmq.type';
 
 @Controller('vehicles')
 export class VehiclesController {

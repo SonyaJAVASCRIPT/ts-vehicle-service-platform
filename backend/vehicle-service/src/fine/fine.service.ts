@@ -1,19 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFineDto, UpdateFineDto } from 'src/dto/fines.dto';
 import { PrismaService } from 'src/prisma.service';
+import { VehicleHelperService } from 'src/shared/vehicle-helper.service';
 
 @Injectable()
 export class FineService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private vehicleHelper: VehicleHelperService,
+  ) {}
 
   async create(ownerId: number, dto: CreateFineDto) {
-    const vehicle = await this.prismaService.vehicle.findUnique({
-      where: { ownerId },
-    });
-
-    if (!vehicle) {
-      throw new NotFoundException(`Vehicle for ownerId ${ownerId} not found`);
-    }
+    const vehicle = await this.vehicleHelper.getVehicleByOwnerId(ownerId);
 
     return this.prismaService.fine.create({
       data: {
@@ -28,14 +26,7 @@ export class FineService {
 
   async findAll(ownerId?: number) {
     if (ownerId) {
-      const vehicle = await this.prismaService.vehicle.findUnique({
-        where: { ownerId },
-      });
-
-      if (!vehicle) {
-        throw new NotFoundException(`Vehicle for ownerId ${ownerId} not found`);
-      }
-
+      const vehicle = await this.vehicleHelper.getVehicleByOwnerId(ownerId);
       return this.prismaService.fine.findMany({
         where: { vehicleId: vehicle.id },
       });

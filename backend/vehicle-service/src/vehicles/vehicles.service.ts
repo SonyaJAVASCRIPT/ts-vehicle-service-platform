@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { RmqPayload } from './vehicles.controller';
 import { UpdateVehicleDto } from 'src/dto/vehicle.dto';
+import { RmqPayload } from 'src/types/rabbitmq.type';
+import { VehicleHelperService } from 'src/shared/vehicle-helper.service';
 
 @Injectable()
 export class VehiclesService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private vehicleHelper: VehicleHelperService,
+  ) {}
+
   async createUser(data: RmqPayload) {
     const existingVehicle = await this.prismaService.vehicle.findUnique({
       where: { ownerId: data.id },
@@ -13,6 +18,7 @@ export class VehiclesService {
     if (existingVehicle) {
       return existingVehicle;
     }
+
     return this.prismaService.vehicle.create({
       data: {
         ownerId: data.id,
@@ -36,20 +42,16 @@ export class VehiclesService {
   }
 
   async update(ownerId: number, data: UpdateVehicleDto) {
-    const vehicle = await this.prismaService.vehicle.findUnique({
-      where: { ownerId },
-    });
-    if (!vehicle) {
-      throw new NotFoundException(`Vehicle with ownerId ${ownerId} not found`);
-    }
-    const updated = await this.prismaService.vehicle.update({
+    await this.vehicleHelper.getVehicleByOwnerId(ownerId);
+
+    return this.prismaService.vehicle.update({
       where: { ownerId },
       data,
     });
-    return updated;
   }
 
   async remove(ownerId: number) {
+    await this.vehicleHelper.getVehicleByOwnerId(ownerId);
     return this.prismaService.vehicle.delete({
       where: { ownerId },
     });
