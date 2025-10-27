@@ -1,57 +1,53 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { RmqPayload } from './vehicles.controller';
-import { UpdateVehicleDto } from 'src/dto/vehicle.dto';
 
 @Injectable()
 export class VehiclesService {
-  constructor(private prismaService: PrismaService) {}
-  async createUser(data: RmqPayload) {
-    const existingVehicle = await this.prismaService.vehicle.findUnique({
+  constructor(private prisma: PrismaService) {}
+
+  async createUser(data) {
+    const v = await this.prisma.vehicle.findFirst({
       where: { ownerId: data.id },
     });
-    if (existingVehicle) {
-      return existingVehicle;
+    if (v) {
+      console.log('already exists');
+      return v;
     }
-    return this.prismaService.vehicle.create({
+
+    return await this.prisma.vehicle.create({
       data: {
         ownerId: data.id,
-        plate: '',
-        brand: '',
+        plate: data.plate || null,
+        brand: data.brand || null,
       },
     });
   }
 
   async findAll() {
-    return this.prismaService.vehicle.findMany({
-      include: { fines: true },
-    });
+    const res = await this.prisma.vehicle.findMany();
+    console.log(res);
+    return res;
   }
 
-  async findOne(ownerId: number) {
-    return this.prismaService.vehicle.findUnique({
-      where: { ownerId },
-      include: { fines: true },
+  async findOne(id) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { ownerId: +id },
     });
+    return vehicle;
   }
 
-  async update(ownerId: number, data: UpdateVehicleDto) {
-    const vehicle = await this.prismaService.vehicle.findUnique({
-      where: { ownerId },
+  async update(id, dto) {
+    const result = await this.prisma.vehicle.update({
+      where: { ownerId: +id },
+      data: dto,
     });
-    if (!vehicle) {
-      throw new NotFoundException(`Vehicle with ownerId ${ownerId} not found`);
-    }
-    const updated = await this.prismaService.vehicle.update({
-      where: { ownerId },
-      data,
-    });
-    return updated;
+    return result;
   }
 
-  async remove(ownerId: number) {
-    return this.prismaService.vehicle.delete({
-      where: { ownerId },
+  async remove(id) {
+    await this.prisma.vehicle.delete({
+      where: { ownerId: +id },
     });
+    console.log('deleted', id);
   }
 }

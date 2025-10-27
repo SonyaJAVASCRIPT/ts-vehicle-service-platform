@@ -1,83 +1,65 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateFineDto, UpdateFineDto } from 'src/dto/fines.dto';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class FineService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(ownerId: number, dto: CreateFineDto) {
-    const vehicle = await this.prismaService.vehicle.findUnique({
-      where: { ownerId },
+  async create(id, dto) {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { ownerId: id },
     });
 
     if (!vehicle) {
-      throw new NotFoundException(`Vehicle for ownerId ${ownerId} not found`);
+      throw 'no vehicle';
     }
 
-    return this.prismaService.fine.create({
+    const fine = await this.prisma.fine.create({
       data: {
         date: dto.date,
-        description: dto.description,
+        description: dto.desc || '',
         amount: dto.amount,
-        status: dto.status ?? false,
-        vehicle: { connect: { id: vehicle.id } },
+        status: dto.status,
+        vehicleId: vehicle.id,
       },
     });
-  }
 
-  async findAll(ownerId?: number) {
-    if (ownerId) {
-      const vehicle = await this.prismaService.vehicle.findUnique({
-        where: { ownerId },
-      });
-
-      if (!vehicle) {
-        throw new NotFoundException(`Vehicle for ownerId ${ownerId} not found`);
-      }
-
-      return this.prismaService.fine.findMany({
-        where: { vehicleId: vehicle.id },
-      });
-    }
-
-    return this.prismaService.fine.findMany();
-  }
-
-  async findOne(id: number) {
-    const fine = await this.prismaService.fine.findUnique({
-      where: { id },
-    });
-
-    if (!fine) {
-      throw new NotFoundException(`Fine with id ${id} not found`);
-    }
-
+    console.log('fine created', fine);
     return fine;
   }
 
-  async update(id: number, dto: UpdateFineDto) {
-    const fine = await this.prismaService.fine.findUnique({ where: { id } });
-
-    if (!fine) {
-      throw new NotFoundException(`Fine with id ${id} not found`);
+  async findAll(id?) {
+    let fines = [];
+    if (id) {
+      const v = await this.prisma.vehicle.findFirst({ where: { ownerId: id } });
+      if (v) {
+        fines = await this.prisma.fine.findMany({ where: { vehicleId: v.id } });
+      } else {
+        return [];
+      }
+    } else {
+      fines = await this.prisma.fine.findMany();
     }
+    return fines;
+  }
 
-    return this.prismaService.fine.update({
+  async findOne(id) {
+    return this.prisma.fine.findUnique({ where: { id } });
+  }
+
+  async update(id, dto) {
+    return this.prisma.fine.update({
       where: { id },
-      data: { ...dto },
+      data: dto,
     });
   }
 
-  async remove(id: number) {
-    const fine = await this.prismaService.fine.findUnique({ where: { id } });
-
-    if (!fine) {
-      throw new NotFoundException(`Fine with id ${id} not found`);
+  async remove(id) {
+    try {
+      await this.prisma.fine.delete({ where: { id } });
+      console.log('fine deleted');
+    } catch (e) {
+      console.log('error', e);
     }
-
-    return this.prismaService.fine.delete({
-      where: { id },
-    });
   }
 }

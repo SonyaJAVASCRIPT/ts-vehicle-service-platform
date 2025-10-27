@@ -1,40 +1,40 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
   Post,
   Put,
+  Delete,
+  Param,
+  Body,
 } from '@nestjs/common';
 import { FineService } from './fine.service';
-import { CreateFineDto, UpdateFineDto } from 'src/dto/fines.dto';
 
 @Controller('fine')
 export class FineController {
-  constructor(private readonly finesService: FineService) {}
-  @Post(':vehicleId')
-  create(@Param('vehicleId') vehicleId: string, @Body() dto: CreateFineDto) {
-    return this.finesService.create(+vehicleId, dto);
+  constructor(private fineService: FineService) {}
+
+  @Post()
+  create(@Body() dto: any) {
+    return this.fineService.create(dto.vehicleId, dto);
   }
 
   @Get()
-  findAll() {
-    return this.finesService.findAll();
+  getAll() {
+    return this.fineService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.finesService.findOne(+id);
+  get(@Param('id') id) {
+    return this.fineService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateFineDto) {
-    return this.finesService.update(+id, dto);
+  edit(@Param('id') id, @Body() dto) {
+    return this.fineService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.finesService.remove(+id);
+  del(@Param('id') id) {
+    return this.fineService.remove(id);
   }
 }
