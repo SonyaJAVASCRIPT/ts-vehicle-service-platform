@@ -3,10 +3,8 @@ import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
 export class CreateFineDto {
   @IsString()
   date: string;
-
   @IsString()
   description: string;
-
   @IsNumber()
   amount: number;
   @IsOptional()
@@ -20,7 +18,7 @@ export class UpdateFineDto {
   @IsString()
   description?: string;
   @IsNumber()
-  amount?: number;
+  amount: number;
   @IsOptional()
   @IsBoolean()
   status?: boolean;
