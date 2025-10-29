@@ -13,12 +13,18 @@ export class CreateFineDto {
 }
 
 export class UpdateFineDto {
+  @IsOptional()
   @IsString()
   date?: string;
+
+  @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
   @IsNumber()
-  amount: number;
+  amount?: number;
+
   @IsOptional()
   @IsBoolean()
   status?: boolean;
